@@ -18,7 +18,7 @@ get_ibs <- function(
   q_eval = c(.25, .5, .75),
   ...) {
 
-  if (class(data) == "list") {
+  if (class(data)[1] == "list") {
     status_values <- sort(unique(data[[1]]$status))
   } else {
     status_values <- sort(unique(data$status))
@@ -32,15 +32,15 @@ get_ibs <- function(
       times <- times_list(data, q_last = q_last, q_eval = q_eval,
           status_value = .x)
       time_seq <- seq(.01, times$t_last, length.out = 500L)
-      if (class(data) == "list") {
+      if (class(data)[1] == "list") {
         if(class(object)[1] == "list") {
           pred <- predictSurvProb(object[[1]], data, times = time_seq)
         } else {
           pred <- predictSurvProb(object, data, times = time_seq)
         }
       }
-      pec_params$object <- if (class(data) == "list") {list("pam_xgb" = pred)} else {object}
-      pec_params$data <- if (class(data) == "list") { data[[1]]} else{ data }
+      pec_params$object <- if (class(data)[1] == "list") {list("pam_xgb" = pred)} else {object}
+      pec_params$data <- if (class(data)[1] == "list") { data[[1]]} else{ data }
       pec_params$times <- time_seq
       pec_params$cause <- .x
 
@@ -80,7 +80,7 @@ get_ibs <- function(
 times_list <- function(data, q_last = .8, q_eval = c(.25, .5, .75),
   time_var = "time", status_var = "status", status_value = 1) {
 
-  if (class(data) == "list") {
+  if (class(data)[1] == "list") {
     data <- data[[1]]
   }
 

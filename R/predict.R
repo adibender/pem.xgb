@@ -20,12 +20,10 @@ predict.pam_xgb <- function(
   type = c("hazard", "cumu_hazard", "surv_prob"),
   ...) {
 
-  ## TODO: this function actually doesn't work if data is xgb.DMatrix
   type <- match.arg(type)
   brks <- attr(object, "attr_ped")$breaks
   # attr(object, "attr_ped") <- c(attr(object, "attr_ped"), status_var = "status")
 
-  ## TODO: catch case where newdata either xgb.DMatrix or data.frame in ped format
   ped_newdata <- as_ped(object, newdata)
   vars <- setdiff(
     attr(ped_newdata, "names"),
@@ -37,7 +35,7 @@ predict.pam_xgb <- function(
   if (type == "cumu_hazard") {
     ped_newdata <- ped_newdata %>%
       group_by(.data$id) %>%
-      mutate(pred = cumsum(.data$pred * exp(.data$offset)))#TODO: is it correct to use offset here?
+      mutate(pred = cumsum(.data$pred * exp(.data$offset)))
   }
   if (type == "surv_prob") {
      ped_newdata <- ped_newdata %>%
@@ -48,19 +46,16 @@ predict.pam_xgb <- function(
   ped_newdata %>%
     group_by(.data[["id"]]) %>%
     filter(row_number() == n()) %>%
-    pull(.data[["pred"]]) # TODO: is the hazard/surv prob in the last available interval a useful return?
+    pull(.data[["pred"]])
 
 }
 
 # check for time-dependent covariates.
-#TODO seems like this should just be a flag in attr_ped?
 has_tdc <- function(model) {
   any(c("ccr", "func") %in% names(attributes(model)[["attr_ped"]]))
 }
 
 get_new_ped <- function(object, newdata, times, attr_ped) {
-  ## TODO: create ped_info without creating a ped_newdata object first
-  # extract vars used in model fit
   covars <- setdiff(attr_ped[["names"]], attr_ped[["intvars"]])
   if ("tend" %in% object$feature_names) {
     vars <- c("tend", covars)
@@ -77,7 +72,7 @@ get_new_ped <- function(object, newdata, times, attr_ped) {
   ped_info[["offset"]] <- c(ped_info[["times"]][1], diff(ped_info[["times"]]))
 
   # create data set with interval/time + covariate info
-  newdata[[id_var]] <- seq_len(nrow(newdata)) #TODO: potentially overwriting it here seems dangerous?
+  newdata[[id_var]] <- seq_len(nrow(newdata))
   new_ped <- pammtools::combine_df(ped_info, newdata[, c(id_var, covars)])
   new_ped$ped_status <- 1
   new_ped
@@ -113,7 +108,6 @@ get_all_intervals <- function(
 
 #' @importFrom tidyr fill
 get_new_ped_tdc <- function(object, newdata, times, attr_ped) {
-  ## TODO: create ped_info without creating a ped_newdata object first
   # extract vars used in model fit
   covars <- setdiff(attr_ped[["names"]], attr_ped[["intvars"]])
   id_var <- attr_ped[["id_var"]]
@@ -126,9 +120,6 @@ get_new_ped_tdc <- function(object, newdata, times, attr_ped) {
   # avoid assumption that newdata[[2]] is a single data.frame with TDCs on
   # the same time grid. could also be a list of data.frames (?)
   if (!is.data.frame(newdata[[2]])) {
-    # TODO: rename all ccr_tz_vars to "times",
-    #       do a full join over all TDCs,
-    #       then fill up NAs by LCVF
     stop("multiple time scales for TDCs not implemented yet.")
   }
   #drop ids for which no time constant info is available:

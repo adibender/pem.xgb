@@ -1,9 +1,9 @@
-Package: pamm.xgb
-Title: Advanced survival analysis using xgboost
-Version: 0.1.0
+Package: pem.xgb
+Title: GBT (PEM)
+Version: 0.1.1
 Date: 2020-01-07
 Authors@R: person("Andreas", "Bender", , "andreas.bender@stat.uni-muenchen.de", role = c("aut", "cre"), comment=c(ORCID = "0000-0001-5628-8611"))
-Description: Estimate piece-wise exponential models using gradient based algorithms.
+Description: Estimate PEMs using XGBoost. Prototype implementation for Paper accepted at ECML 2020.
 Depends: R (>= 3.6.0)
 Imports:
     caret,
@@ -22,8 +22,6 @@ Suggests:
     knitr,
     rmarkdown,
     testthat
-Remotes:
-  adibender/pammtools
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
