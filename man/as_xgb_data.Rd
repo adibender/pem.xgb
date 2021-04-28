@@ -10,7 +10,7 @@ as_xgb_data(x, ...)
 
 \method{as_xgb_data}{data.frame}(x, features, label, set_margin = TRUE, ...)
 
-\method{as_xgb_data}{ped}(x, ...)
+\method{as_xgb_data}{ped}(x, set_margin = TRUE, ...)
 }
 \description{
 Transform data suitable for xgboost applications

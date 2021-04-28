@@ -192,7 +192,7 @@ xgb.tune_pam <- function(
       print(.x)
       cv_res <- xgb.cv_pam(
         data                  = data,
-        params                = .x,
+        params                = as.list(.x),
         nrounds               = nrounds,
         nfold                 = nfold,
         cv_indices            = cv_indices,

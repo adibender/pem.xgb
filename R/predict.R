@@ -18,6 +18,7 @@ predict.pam_xgb <- function(
   object,
   newdata,
   type = c("hazard", "cumu_hazard", "surv_prob"),
+  set_margin = FALSE,
   ...) {
 
   type <- match.arg(type)
@@ -29,9 +30,12 @@ predict.pam_xgb <- function(
     attr(ped_newdata, "names"),
     attr(ped_newdata, "intvars"))
 
-  xgb_newdata   <- as_xgb_data(ped_newdata)
+  xgb_newdata   <- as_xgb_data(ped_newdata, set_margin = set_margin)
 
-  ped_newdata[["pred"]] <- xgboost:::predict.xgb.Booster(object, xgb_newdata)
+  ped_newdata[["pred"]] <- xgboost:::predict.xgb.Booster(
+    object,
+    xgb_newdata,
+    ...)
   if (type == "cumu_hazard") {
     ped_newdata <- ped_newdata %>%
       group_by(.data$id) %>%
@@ -245,8 +249,8 @@ predictEventProb.pam_xgb <- function(
     mutate(sp_all_cause = exp(-(
       cumsum(.data$csh1 * .data$offset) +
       cumsum(.data$csh2 * .data$offset)))) %>%
-    mutate(cif1 = cumsum(.data$csh1 * lag(.data$sp_all_cause, default = 1) * .data$offset)) %>%
-    mutate(cif2 = cumsum(.data$csh2 * lag(.data$sp_all_cause, default = 1) * .data$offset)) %>%
+    mutate(cif1 = cumsum(.data$csh1 * (.data$sp_all_cause - 1e-5) * .data$offset)) %>%
+    mutate(cif2 = cumsum(.data$csh2 * (.data$sp_all_cause - 1e-5) * .data$offset)) %>%
     ungroup() %>%
     filter(.data[["times"]] %in% .env[["times"]])
     id <- unique(new_ped[[id_var]])
@@ -256,72 +260,3 @@ predictEventProb.pam_xgb <- function(
     do.call(rbind, pred_list)
 
 }
-# #' S3 method for pamm objects for compatibility with package pec
-# #'
-# #' @inheritParams pec::predictSurvProb
-# #' @importFrom pec predictSurvProb
-# #' @importFrom purrr map
-# #'
-# #' @export
-# predictEventProb.pamm <- function(
-#   object,
-#   newdata,
-#   times,
-#   cause,
-#   ...) {
-
-#   if (!is.ped(newdata)) {
-
-#     trafo_args <- object[["attr_ped"]]
-#     id_var     <- trafo_args[["id_var"]]
-#     brks       <- trafo_args[["breaks"]]
-#     if ( max(times) > max(brks) ) {
-#       stop("Can not predict beyond the last time point used during model estimation.
-#         Check the 'times' argument.")
-#     }
-#     ped_times <- sort(unique(union(c(0, brks), times)))
-#     # extract relevant intervals only, keeps data small
-#     ped_times <- ped_times[ped_times <= max(times)]
-#     # obtain interval information
-#     ped_info <- get_intervals(brks, ped_times[-1])
-#     # add adjusted offset such that cumulative hazard and survival probability
-#     # can be calculated correctly
-#     ped_info[["intlen"]] <- c(ped_info[["times"]][1], diff(ped_info[["times"]]))
-#     # create data set with interval/time + covariate info
-#     newdata[[id_var]] <- seq_len(nrow(newdata))
-#     newdata <- combine_df(ped_info, newdata)
-
-#   }
-
-#   env_times <- times
-#   newdata$type2 <- factor(1, levels=c("1", "2"))
-#   newdata[["csh1"]] <- predict(
-#     pammtools:::unpam(object),
-#     newdata = newdata,
-#     type    = "response")
-#   newdata$type2 <- factor(2, levels= c("1", "2"))
-#   newdata[["csh2"]] <- predict(
-#     pammtools:::unpam(object),
-#     newdata = newdata,
-#     type    = "response")
-#   newdata$type2 <- factor(cause, levels = c("1", "2"))
-#   newdata <- newdata %>%
-#     arrange(.data$id, .data$times) %>%
-#     group_by(.data$id) %>%
-#     mutate(sp_all_cause = exp(-(
-#       cumsum(.data$csh1 * .data$intlen) +
-#       cumsum(.data$csh2 * .data$intlen)))) %>%
-#     mutate(cif1 = cumsum(csh1 * lag(sp_all_cause, default = 1) * .data$intlen)) %>%
-#     mutate(cif2 = cumsum(csh2 * lag(sp_all_cause, default = 1) * .data$intlen)) %>%
-#     ungroup() %>%
-#     filter(.data[["times"]] %in% .env[["times"]])
-
-#   id <- unique(newdata[[id_var]])
-#   pred_list <- map(
-#     id,
-#     ~ newdata[newdata[[id_var]] == .x,
-#       paste0("cif", cause)] %>% pull(paste0("cif", cause)))
-
-#   do.call(rbind, pred_list)
-
-# }

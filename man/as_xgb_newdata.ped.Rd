@@ -4,7 +4,7 @@
 \alias{as_xgb_newdata.ped}
 \title{Transform new data to xgb-PED format using same arguments as previous transformation}
 \usage{
-\method{as_xgb_newdata}{ped}(x, newdata, ...)
+\method{as_xgb_newdata}{ped}(x, newdata, set_margin = TRUE, ...)
 }
 \description{
 Transform new data to xgb-PED format using same arguments as previous transformation
