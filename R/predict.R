@@ -206,6 +206,8 @@ predictSurvProb.pam_xgb <- function(
   do.call(rbind, pred_list)
 
 }
+
+
 #' S3 method for compatibility with package pec
 #'
 #' This function is needed to use \code{pec::pec} in the competing risks setting.
@@ -214,6 +216,7 @@ predictSurvProb.pam_xgb <- function(
 #' @importFrom purrr map
 #' @importFrom pammtools get_intervals
 #' @export
+#' @rdname predictEventProb
 predictEventProb.pam_xgb <- function(
   object,
   newdata,
@@ -243,6 +246,65 @@ predictEventProb.pam_xgb <- function(
   new_ped$type <- 2 # predict hazard for second cause
   new_ped[["csh2"]] <- xgboost:::predict.xgb.Booster(object,
         as_xgb_data(new_ped, vars, label = "ped_status", set_margin = FALSE))
+  new_ped <- new_ped %>%
+    arrange(.data$id, .data$times) %>%
+    group_by(.data$id) %>%
+    mutate(sp_all_cause = exp(-(
+      cumsum(.data$csh1 * .data$offset) +
+      cumsum(.data$csh2 * .data$offset)))) %>%
+    mutate(cif1 = cumsum(.data$csh1 * (.data$sp_all_cause - 1e-5) * .data$offset)) %>%
+    mutate(cif2 = cumsum(.data$csh2 * (.data$sp_all_cause - 1e-5) * .data$offset)) %>%
+    ungroup() %>%
+    filter(.data[["times"]] %in% .env[["times"]])
+    id <- unique(new_ped[[id_var]])
+    pred_list <- map(id, ~new_ped[new_ped[[id_var]] == .x,
+        paste0("cif", cause)] %>%
+        pull(paste0("cif", cause)))
+    do.call(rbind, pred_list)
+
+}
+
+
+#' S3 method for compatibility with package pec
+#'
+#' This function is needed to use \code{pec::pec} in the competing risks setting.
+#'
+#' @importFrom pec predictEventProb
+#' @importFrom purrr map
+#' @importFrom pammtools get_intervals
+#' @export
+#' @rdname predictEventProb
+predictEventProb.list <- function(
+  object,
+  newdata,
+  times,
+  cause,
+  ...
+) {
+
+  attr_ped <- attributes(object[[1]])[["attr_ped"]]
+  id_var <- attr_ped[["id_var"]]
+  brks <- attr_ped[["breaks"]]
+  ped_times <- sort(unique(union(c(0, brks), times)))
+  ped_times <- ped_times[ped_times <= max(times)]
+  ped_info <- get_intervals(brks, ped_times[-1])
+  ped_info[["offset"]] <- c(ped_info[["times"]][1], diff(ped_info[["times"]]))
+  covars <- setdiff(attr_ped[["names"]], attr_ped[["intvars"]])
+  if ("tend" %in% object[[1]]$feature_names) {
+    vars <- c("tend", covars)
+  } else {
+    vars <- covars
+  }
+  newdata[["type"]] <- 1
+  newdata[[id_var]] <- seq_len(nrow(newdata))
+  new_ped <- pammtools::combine_df(ped_info, newdata[, c(id_var, covars)])
+  new_ped$ped_status <- 1 # irrelevant
+  new_ped$type <- 1
+  new_ped[["csh1"]] <- xgboost:::predict.xgb.Booster(object[[1]],
+        as_xgb_data.data.frame(new_ped, vars, label = "ped_status", set_margin = FALSE))
+  new_ped$type <- 2 # predict hazard for second cause
+  new_ped[["csh2"]] <- xgboost:::predict.xgb.Booster(object[[2]],
+        as_xgb_data.data.frame(new_ped, vars, label = "ped_status", set_margin = FALSE))
   new_ped <- new_ped %>%
     arrange(.data$id, .data$times) %>%
     group_by(.data$id) %>%

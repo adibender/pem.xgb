@@ -34,3 +34,39 @@ test_that("xgb models are fit to PED data", {
 
 
 })
+
+
+test_that("competing risks setting words", {
+
+  data("cancer", package = "survival")
+  mgus2$time <- with(mgus2, ifelse(pstat == 0, futime, ptime))
+  mgus2$status <- with(mgus2, ifelse(pstat == 0, 2 * death, 1))
+  mgus2 <- mgus2 %>%
+    dplyr::select(-id, -ptime, -futime, -death, -pstat) %>%
+    dplyr::mutate_if(is.numeric, ~ifelse(is.na(.), mean(., na.rm = TRUE), .))
+
+  ped <- as_ped(mgus2, Surv(time, status)~.)
+  xgb1 <- xgb.train.ped(
+    params  = list(eta = .3),
+    data    = dplyr::filter(ped, cause == 1),
+    nrounds = 20L,
+    verbose = FALSE)
+  xgb2 <- xgb.train.ped(
+    params  = list(eta = .3),
+    data    = dplyr::filter(ped, cause == 2),
+    nrounds = 20L,
+    verbose = FALSE)
+  xgb_list <- list(xgb1, xgb2)
+  event_prob1 <- predictEventProb(
+    object = xgb_list,
+    newdata = mgus2[1:10,],
+    times = c(0.1, 3, 5, 200),
+    cause = 1)
+  event_prob2 <- predictEventProb(
+    object = xgb_list,
+    newdata = mgus2[1:10,],
+    times = c(0.1, 3, 5, 200),
+    cause = 2)
+
+
+})

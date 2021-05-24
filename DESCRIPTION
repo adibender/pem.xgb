@@ -1,7 +1,7 @@
 Package: pem.xgb
 Title: GBT (PEM)
-Version: 0.1.2
-Date: 2020-01-07
+Version: 0.1.3
+Date: 2021-05-24
 Authors@R: person("Andreas", "Bender", , "andreas.bender@stat.uni-muenchen.de", role = c("aut", "cre"), comment=c(ORCID = "0000-0001-5628-8611"))
 Description: Estimate PEMs using XGBoost. Prototype implementation for Paper accepted at ECML 2020.
 Depends: R (>= 3.6.0)
