@@ -29,12 +29,16 @@ as_xgb_data.data.frame <- function(x, features, label, set_margin = TRUE, ...) {
 #' @rdname as_xgb_data
 #' @inherit as_xgb_data
 # TODO: remove hard coded vars (should be stored in ped object)
-as_xgb_data.ped <- function(x, ...) {
+as_xgb_data.ped <- function(x, set_margin = TRUE, ...) {
 
   omit_vars <- attributes(x)[c("id_var", "intvars")] %>% unlist()
   keep_vars <- unique(c("tend", setdiff(colnames(x), omit_vars)))
 
-  as_xgb_data(as.data.frame(x), features = keep_vars, label = "ped_status")
+  as_xgb_data(
+    as.data.frame(x),
+    features   = keep_vars,
+    label      = "ped_status",
+    set_margin = set_margin)
 
 }
 
@@ -47,12 +51,16 @@ as_xgb_newdata <- function(x, newdata, ...) {
 
 #' @inherit as_xgb_newdata
 #' @keywords internal
-as_xgb_newdata.ped <- function(x, newdata, ...) {
+as_xgb_newdata.ped <- function(x, newdata, set_margin = TRUE, ...) {
 
     ped <- as_ped(x, newdata)
     vars <- setdiff(attr(x, "names"), attr(x, "intvars"))
 
-    as_xgb_data(ped, features = vars, label = "ped_status")
+    as_xgb_data(
+      ped,
+      features   = vars,
+      label      = "ped_status",
+      set_margin = set_margin)
 
 
 }
@@ -62,7 +70,7 @@ as_xgb_newdata.pam_xgb <- function(x, newdata, ...) {
 
     ped_newdata <- as_ped(x, newdata)
 
-    as_xgb_data(ped_newdata)
+    as_xgb_data(ped_newdata, ...)
 
 }
 
@@ -79,7 +87,7 @@ as_ped.pam_xgb <- function(data, newdata, ...) {
 
   trafo_args      <- data[["trafo_args"]]
   trafo_args$data <- newdata
-  do.call(split_data, trafo_args)
+  do.call(pammtools::as_ped, trafo_args)
 
 }
 

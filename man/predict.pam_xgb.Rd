@@ -4,7 +4,13 @@
 \alias{predict.pam_xgb}
 \title{Predict hazard, cumulative hazard or survival probability}
 \usage{
-\method{predict}{pam_xgb}(object, newdata, type = c("hazard", "cumu_hazard", "surv_prob"), ...)
+\method{predict}{pam_xgb}(
+  object,
+  newdata,
+  type = c("hazard", "cumu_hazard", "surv_prob"),
+  set_margin = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{An object of class \code{pam_xgb}}

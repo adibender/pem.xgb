@@ -2,10 +2,15 @@
 % Please edit documentation in R/predict.R
 \name{predictEventProb.pam_xgb}
 \alias{predictEventProb.pam_xgb}
+\alias{predictEventProb.list}
 \title{S3 method for compatibility with package pec}
 \usage{
 \method{predictEventProb}{pam_xgb}(object, newdata, times, cause, ...)
+
+\method{predictEventProb}{list}(object, newdata, times, cause, ...)
 }
 \description{
+This function is needed to use \code{pec::pec} in the competing risks setting.
+
 This function is needed to use \code{pec::pec} in the competing risks setting.
 }

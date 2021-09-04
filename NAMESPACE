@@ -3,6 +3,7 @@
 S3method(as.data.frame,crps)
 S3method(as_ped,pam_xgb)
 S3method(predict,pam_xgb)
+S3method(predictEventProb,list)
 S3method(predictEventProb,pam_xgb)
 S3method(predictSurvProb,pam_xgb)
 export(add_cumu_hazard2)
